@@ -4,102 +4,79 @@ const app = express();
 const { QueryResultError } = require('pg-promise');
 const pgp = require('pg-promise')();
 
-const port = process.env.PORT || 3000; // Porta que a API irá ouvir (ou usa a porta definida nas variáveis de ambiente)
+const port = process.env.PORT || 3000;
 
-// Importe o modelo Task
-const Task = require('./task');
-// Importe o modelo Pessoa
-const Pessoa = require('./pessoa'); // Certifique-se de usar o caminho correto para o arquivo Pessoa.js
+const Funcionario = require('./funcionario');
 
 app.use(bodyParser.json());
 
-// Rota para listar todas as tarefas
-app.get('/tasks', async (req, res) => {
-    try {
-      const tasks = await Task.getAll(); // Adicione 'await' aqui
-      res.setHeader('Content-Type', 'application/json');
-      res.json(tasks);
-    } catch (error) {
-      if (error.code === pgp.errors.queryResultErrorCode.noData) {
-        res.setHeader('Content-Type', 'application/json');
-        res.json([]);
-      } else {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao buscar as tarefas' });
-      }
-    }
-  });
-
-// Rota para listar todas as pessoas
-app.get('/pessoas', async (req, res) => {
-    try {
-      const pessoas = await Pessoa.getAll(); // Adicione 'await' aqui
-      res.setHeader('Content-Type', 'application/json');
-      res.json(pessoas);
-    } catch (error) {
-      if (error.code === pgp.errors.queryResultErrorCode.noData) {
-        res.setHeader('Content-Type', 'application/json');
-        res.json([]);
-      } else {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao buscar as pessoas' });
-      }
-    }
-  });
-
-// Rota para criar uma tarefa
-app.post('/tasks', async (req, res) => {
+// GETALL FUNCIONARIOS
+app.get('/funcionarios', async (req, res) => {
   try {
-    const { titulo, descricao, done } = req.body;
-    const newTask = await Task.create(titulo, descricao, done);
-    res.json(newTask);
+    const funcionarios = await Funcionario.getAll();
+    res.setHeader('Content-Type', 'application/json');
+    res.json(funcionarios);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao criar a tarefa' });
-  }
-});
-
-// Rota para criar uma pessoa
-app.post('/pessoas', async (req, res) => {
-  try {
-    const { nome, idade, cep, cpf } = req.body;
-    const newPessoa = await Pessoa.create(nome, idade, cep, cpf);
-    res.json(newPessoa);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao criar a pessoa' });
-  }
-});
-
-// Rota para buscar uma tarefa por ID
-app.get('/tasks/:id', async (req, res) => {
-  try {
-    const taskId = req.params.id;
-    const task = await Task.getById(taskId);
-    if (task) {
-      res.json(task);
+    if (error.code === pgp.errors.queryResultErrorCode.noData) {
+      res.setHeader('Content-Type', 'application/json');
+      res.json([]);
     } else {
-      res.status(404).json({ error: 'Tarefa não encontrada' });
+      console.error(error);
+      res.status(500).json({ error: 'Erro ao buscar os funcionários' });
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar a tarefa' });
   }
 });
 
-// Rota para buscar uma pessoa por CPF
-app.get('/pessoas/:cpf', async (req, res) => {
+// CREATE FUNCIONARIO
+app.post('/funcionarios', async (req, res) => {
+  try {
+    const { nome, idade, cpf, cargo, departamento } = req.body;
+    const newFuncionario = await Funcionario.create(nome, idade, cpf, cargo, departamento);
+    res.json(newFuncionario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao criar o funcionário' });
+  }
+});
+
+// GET FUNCIONARIO VIA CPF
+app.get('/funcionarios/:cpf', async (req, res) => {
   try {
     const cpf = req.params.cpf;
-    const pessoa = await Pessoa.getByCpf(cpf);
-    if (pessoa) {
-      res.json(pessoa);
+    const funcionario = await Funcionario.getByCpf(cpf);
+    if (funcionario) {
+      res.json(funcionario);
     } else {
-      res.status(404).json({ error: 'Pessoa não encontrada' });
+      res.status(404).json({ error: 'Funcionário não encontrado' });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar a pessoa' });
+    res.status(500).json({ error: 'Erro ao buscar o funcionário' });
+  }
+});
+
+// UPDATE FUNCIONARIO VIA CPF
+app.put('/funcionarios/:cpf', async (req, res) => {
+  try {
+    const cpf = req.params.cpf;
+    const { nome, idade, cargo, departamento } = req.body;
+    const updatedFuncionario = await Funcionario.updateByCpf(cpf, nome, idade, cargo, departamento);
+    res.json(updatedFuncionario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao atualizar o funcionário' });
+  }
+});
+
+// DELETE FUNCIONARIO VIA CPF
+app.delete('/funcionarios/:cpf', async (req, res) => {
+  try {
+    const cpf = req.params.cpf;
+    await Funcionario.deleteByCpf(cpf);
+    res.json({ message: 'Funcionário excluído com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao excluir o funcionário' });
   }
 });
 
